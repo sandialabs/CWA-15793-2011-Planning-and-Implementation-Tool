@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>Load File</title>
+        <script>window.$ = window.jQuery = require('jquery');</script> <!-- import jquery -->
+        <link href="../assets/css/popUp.css" type="text/css" rel="stylesheet"> 
+        <script src="lowdb.js"></script>
+    </head>
+
+    <body style="-webkit-app-region: drag">
+        <h2 style="padding-left: 20px;">Load File</h2>
+        <button id="closeBtn">&times;</button>
+
+        <div style="text-align: center;">
+
+            <select id="chooseFile"></select>
+            
+            <br><br>
+
+            <p style="text-align: center;">Save as new?</p>
+
+            <input type="radio" id="asNew_Yes"
+            name="asNew" value="Yes">
+            <label for="asNew_Yes">Yes</label>
+
+            <input type="radio" id="asNew_No"
+            name="asNew" value="No" checked="checked">
+            <label for="asNew_No">No</label>
+            
+            <br><br><br>
+
+            <div id ="nameWrap">
+                Enter a new file name:
+                <br>
+                <textarea id="fileName" style="resize: none;"></textarea>  
+            </div>
+        </div>
+
+        <br>
+
+        <button id="nextBtn" style="top: auto; bottom: 5%;" > <!-- for this partiular button, reset top setting to auto and move to bottom -->
+            Next
+        </button> 
+    </body>
+
+<!-- the script below populates the dropdown list "chooseFile" with the name of each file from the JSON database and provides save as new option -->
+    <script>
+        // populate dropdown
+        var $chooseFile = $("#chooseFile");
+            vals = []; // initialize an array to hold values retrieved from getFileAges() function
+            
+        $chooseFile.empty(); // empty the list before executing script each time
+            
+        if (getFileNames().length === 0) {
+            $chooseFile.append("<option>" + "No files found" + "</option>"); // alert user if no files found in database
+        }
+        else {
+            vals = getFileNames(); // if there are files, populate vals
+        
+            $.each(vals, function(index, value) { // for each value in vals
+                    $chooseFile.append("<option>" + value + "</option>"); // append to list
+            });
+        };
+
+        // add elements to windows for text entry if user decides to load file as new
+        $(document).ready(function() {
+            $("#nameWrap").hide(); //nameWrap div is hidden by default
+            $('input[type=radio][name=asNew]').change(function() { // change when radio input is changed
+                if (this.value === 'Yes') { 
+                    $("#nameWrap").show(); // show the text input for a new file name
+                    window.resizeTo(400, 375); // resize window to fit
+                }
+                else if (this.value === 'No') {
+                    $("#nameWrap").hide(); // hide the text input for a new file name
+                    window.resizeTo(400, 275); // resize window to default
+                }
+            });
+        });
+    </script>
+
+<!-- the script below uses IPC to send fileName to the main process and start the survey, and invokes methods from lowdb.js to store to the database -->
+    <script>
+        const electron = require('electron')
+        const path = require('path')
+        const ipc = electron.ipcRenderer
+        const remote = electron.remote
+
+        const nextBtn = document.getElementById('nextBtn')
+        const closeBtn = document.getElementById('closeBtn')
+
+        // Send fileName and evaluation begin request over IPC
+        nextBtn.addEventListener('click', function() {
+            if (getFileNames().length !== 0) { // primary readiness check; if there are no file names, then user should not be able to proceed (method getFileNames() is in lowdb.js)
+                if (document.querySelector('input[name="asNew"]:checked').value === 'Yes') { // check if user has decided to load as new
+                    asNew(document.getElementById('chooseFile').value, document.getElementById('fileName').value) // invoke asNew method found in lowdb.js
+                    if (asNew_isReady() === true) { // check readiness with method from lowdb.js
+                        ipc.send('begin_evaluation', document.getElementById('fileName').value) // channel is 'begin_evaluation', include file name from text entry area
+                        var window = remote.getCurrentWindow(); 
+                        window.close()
+                    }
+                }
+                else {
+                        ipc.send('begin_evaluation', document.getElementById('chooseFile').value) // channel is 'begin_evaluation', include file name picked from dropdown
+                        var window = remote.getCurrentWindow();
+                        window.close()
+                }
+            }
+        })
+
+        // do not allow "return" characters to be entered into the textarea
+        window.addEventListener('keydown', function (e) {
+            // Check if the user pressed Enter (key code = 13) 
+            if (e.keyCode === 13) {
+                e.preventDefault(); // disable the enter key on keydown
+            }
+        });
+
+        // provide support to submit via "return" key
+        window.addEventListener('keyup', function (e) {
+            // Check if the user pressed Enter (key code = 13)
+             if (e.keyCode === 13) {
+                if (getFileNames().length !== 0) { // primary readiness check; if there are no file names, then user should not be able to proceed (method getFileNames() is in lowdb.js)
+                    if (document.querySelector('input[name="asNew"]:checked').value === 'Yes') { // check if user has decided to load as new
+                        asNew(document.getElementById('chooseFile').value, document.getElementById('fileName').value) // invoke asNew method found in lowdb.js
+                        if (asNew_isReady() === true) { // check readiness with method from lowdb.js
+                            ipc.send('begin_evaluation', document.getElementById('fileName').value) // channel is 'begin_evaluation', include file name from text entry area
+                            var window = remote.getCurrentWindow(); 
+                            window.close()
+                        }
+                    }
+                    else {
+                            ipc.send('begin_evaluation', document.getElementById('chooseFile').value) // channel is 'begin_evaluation', include file name picked from dropdown
+                            var window = remote.getCurrentWindow();
+                            window.close()
+                    }
+                }
+             }
+        }, false)
+
+        // end IPC send
+
+        // provide a close button
+        closeBtn.addEventListener('click', function (event) {
+            var window = remote.getCurrentWindow();
+            window.close();
+        })
+    </script>
+</html>

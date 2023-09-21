@@ -1,0 +1,43 @@
+Dependencies (as of version 1.0.0-alpha):
+
+electron version 1.8.2 | License: MIT; Link: https://github.com/electron/electron/blob/master/LICENSE ,
+
+electron-builder version 19.56.0 | License: MIT; Link: https://github.com/electron-userland/electron-builder/blob/master/LICENSE ,
+
+jquery version 3.3.1 | License: MIT; Link: https://github.com/jquery/jquery/blob/master/LICENSE.txt ,
+
+lowdb version 1.0.0  | License: MIT; Link: https://github.com/typicode/lowdb/blob/master/LICENSE ,
+
+electron-context-menu version 0.9.1 | Link: MIT; License: https://github.com/sindresorhus/electron-context-menu/blob/master/license ,
+
+fullcalendar version 3.8.1 | License: MIT; Link: https://github.com/fullcalendar/fullcalendar/blob/master/LICENSE.txt ,
+
+generate-docx version 2.0.0 | License: MIT; Link: https://github.com/telemark/generate-docx/blob/master/LICENSE ,
+
+hamburgers version 0.9.3 | License: MIT; Link: https://github.com/jonsuh/hamburgers/blob/master/LICENSE ,
+
+jquery.mmenu version 7.0.2 | License: CC-BY-NC-4.0; Link: https://github.com/FrDH/jQuery.mmenu/blob/master/LICENSE.txt ,
+
+	Additional notice for jquery.mmenu: 
+	The jQuery.mmenu plugin is free to use for personal or non-profit usage. You can purchase a license if you want to use it in a commercial project (including plugins, themes and templates you plan to sell).
+	jQuery.mmenu is available at: http://mmenu.frebsite.nl/
+	Please note that no changes were made to the the source code for this dependency. 
+
+moment version 2.20.1 | License: MIT; Link: https://github.com/moment/moment/blob/develop/LICENSE ,
+
+nouislider version 10.1.0 | License: WTFPL; Link: https://github.com/leongersen/noUiSlider/blob/master/LICENSE ,
+
+simple-doughnut-chart version 1.2.7 | License: ISC; Link: http://spdx.org/licenses/ISC.html ,
+
+	Additional notice for simple-doughnut-chart: 
+	Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC") 
+	Copyright (c) 1995-2003 by Internet Software Consortium 
+
+	Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+	THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+survey-jquery version 1.0.6 | License: MIT; Link: https://github.com/surveyjs/surveyjs/blob/master/LICENSE ,
+
+util.promisify version 1.0.0 | License: MIT; Link: https://github.com/ljharb/util.promisify/blob/master/LICENSE ,
+
+electron-updater version 2.20.1 | License: MIT; Link: https://github.com/electron-userland/electron-builder/blob/master/LICENSE .

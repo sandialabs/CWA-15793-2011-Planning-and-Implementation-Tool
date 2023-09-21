@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>About</title> 
+        <script>window.$ = window.jQuery = require('jquery');</script> <!-- import jquery -->
+        <link href="../assets/css/popUp.css" type="text/css" rel="stylesheet">
+    </head>
+
+    <body style="-webkit-app-region: drag">
+        <h2 style="padding-left: 20px;">About</h2>
+        <button id="closeBtn">&times;</button>
+        <script src="closeBtn.js"></script>
+
+        <div class="textBlock">
+            <p style="padding-left: 10px; padding-right: 50px;">
+            <a id="cwaInfo"></a>
+
+            <br> <br>
+
+            Copyright 2018 National Technology & Engineering Solutions of Sandia, LLC (NTESS). 
+            Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains 
+            certain rights in this software. This installation is licensed under CC-BY-NC-SA-4.0.
+
+            <br> <br>
+
+            Built with
+            Node.js <script>document.write(process.versions.node)</script>,
+            Chromium <script>document.write(process.versions.chrome)</script>,
+            and Electron <script>document.write(process.versions.electron)</script>.
+
+            <br> <br>
+
+            Please see the "README&Legal&Templates" folder in the program location for additional attribution information.
+            </p>
+        </div>
+    </body>
+
+    <script>
+        var json = require('../package.json'); // get package.json
+        $("#cwaInfo").append("CWA 15793:2011 Planning and Implementation Tool version " + json.version); // fill version from package.json
+
+        const electron = require('electron')
+        const path = require('path')
+        const remote = electron.remote
+        // provide a close button
+        closeBtn.addEventListener('click', function (event) {
+            var window = remote.getCurrentWindow();
+            window.close();
+        })
+    </script>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>Remove Files</title>
+        <script>window.$ = window.jQuery = require('jquery');</script> <!-- import jquery -->
+        <link href="../assets/css/popUp.css" type="text/css" rel="stylesheet">
+        <script src="lowdb.js"></script> 
+    </head>
+
+    <body style="-webkit-app-region: drag">
+        <h2 style="padding-left: 20px;">Remove Files</h2>
+        <button id="closeBtn">&times;</button>
+
+        <div style="text-align: center;">
+
+            <p>Delete files here if the application is running slowly or if there is sensitive information that must be destroyed.</p>
+            <br>
+            
+            <select id="chooseFile"></select>
+            
+            </div>
+        </div>
+
+        <br>
+
+        <button id="deleteBtn" style="top: auto; bottom: 25%;" > <!-- for this partiular button, reset top setting to auto and move to bottom -->
+            Delete File
+        </button> 
+
+        <button id="clearBtn" style="top: auto; bottom: 5%;" > <!-- for this partiular button, reset top setting to auto and move to bottom -->
+            Clear Database
+        </button> 
+    </body>
+
+<!-- the script below populates the dropdown list "chooseFile" with the name of each file from the JSON database and provides delete one or delete all files options -->
+    <script>
+        const electron = require('electron')
+        const path = require('path')
+        const ipc = electron.ipcRenderer
+        const remote = electron.remote
+        let readiness = true // readiness used to make sure popup window cannot be closed after the dialog box opened by main is opened but before that dialog box is closed
+
+        var fileNames = getFileNames()
+            $chooseFile = $("#chooseFile")
+            dbEmpty = false // initiate a variable to keep track of if the database is empty (reduces calls to getFileNames())
+
+        $chooseFile.empty(); // empty the list before executing script each time
+        
+        // populate dropdown
+        if (fileNames.length === 0) {
+            $chooseFile.append("<option>" + "No files found" + "</option>"); // alert user if no files found in database
+            dbEmpty = true
+        }
+        else {
+            $.each(fileNames, function(index, value) { // for each value in vals
+                    $chooseFile.append("<option>" + value + "</option>"); // append to list
+            });
+        };
+
+        // when the delete button is clicked, issue a warning via IPC. If the user clicks yes, carry out deletion
+        deleteBtn.addEventListener('click', function() {
+            // check to make sure the file database isn't empty
+            if (dbEmpty === false) { 
+                ipc.send('deleteOne', document.getElementById('chooseFile').value) // ask main.js to initiate the delete warning and send it the fileName to show user
+                readiness = false // readiness now false
+            }
+        }); 
+
+        ipc.on('deleteOne_Res', function(event, response) { // once response is received from main
+            readiness = true // ready again
+            if (response === 0) { // see if it's yes (index 0)
+
+                selectedIndex = $("select[id='chooseFile'] option:selected").index(); // get the index of the selected file in the dropdown
+                deleteOne(document.getElementById('chooseFile').value) // run deleteOne method in lowdb.js
+                        
+                if (getFileNames().length === 0) { // if all files are now gone, set dbEmpty to true
+                    dbEmpty = true
+                }
+                updateDropdown(selectedIndex) // update the dropdown box, send the index of the selected file as argument and dbEmpty 
+            }
+        });
+
+        function updateDropdown(indexToRemove) {
+            $('#chooseFile option:eq(' + indexToRemove + ')').remove(); // update via the index of the file that was removed
+
+            if (dbEmpty === true) { // if that was the last remaining file ...
+                $chooseFile.append("<option>" + "No files found" + "</option>"); // alert user if no files found in database
+            }
+        }
+
+        clearBtn.addEventListener('click', function() {
+            // check to make sure the file database isn't empty
+            if (dbEmpty === false) { 
+                ipc.send('deleteAll') // ask main.js to initiate the delete warning 
+                readiness = false // readiness now false
+            }
+        });
+
+        ipc.on('deleteAll_Res', function(event, response, checkboxChecked) { // once response is received from main
+            readiness = true // ready
+            if (response === 0 && checkboxChecked === true) { // see if it's yes (index 0) and that checkbox was checked for agreement
+                deleteAll() // run deleteAll method in lowdb.js
+                
+                $chooseFile.empty() // empty the dropdown menu
+                $chooseFile.append("<option>" + "No files found" + "</option>"); // alert user if no files found in database
+
+                dbEmpty = true // set dbEmpty to true
+            }
+        });
+            
+        // provide a close button
+        closeBtn.addEventListener('click', function (event) {
+            var window = remote.getCurrentWindow();
+            if (readiness === true) { // if ready
+                window.close(); // close window
+            }
+        })
+    </script>
+</html>
