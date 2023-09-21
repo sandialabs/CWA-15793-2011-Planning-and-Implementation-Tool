@@ -20,7 +20,7 @@
     "appId": "com.electron.CWA_15793_2011_Tool",
     "productName": "CWA 15793 2011 Tool",
     "copyright": "Copyright © 2018 NTESS (National Technology & Engineering Solutions of Sandia, LLC)",
-    "extraFiles": "./README&Legal&Templates",
+    "extraFiles": "./Legal&Templates",
     "compression": "maximum",
     "forceCodeSigning": true,
     "mac": {

@@ -13,7 +13,7 @@ The eventual goal is to iteratively improve the CWA 15793 2011 Tool to include a
 are possible and contingent upon user demand. There is also a possibility of using the application framework as the basis for a suite of biorisk management applications. 
 
 Usage:
-After downloading a package for your operating system, run “CWA 15793 2011 Tool Setup 1.0.0-alpha” in the root folder to install the program. The license terms must be accepted to proceed. 
+After downloading a package for your operating system, run ï¿½CWA 15793 2011 Tool Setup 1.0.0-alphaï¿½ in the root folder to install the program. The license terms must be accepted to proceed. 
 
 System requirements:
 Operating system: Windows 7 or later and macOS 10.9 or later.
@@ -24,7 +24,7 @@ Internet Connection: Recommended at least 10Mbps DSL connection for download and
 
 Data stored by the program:
 Evaluation data is only stored within a JSON database that held locally in the root of the installation directory. You can find where this directory is stored by 
-right clicking on the desktop icon and opening the file location. The database is called “evaldb.json.” It is not recommended that you edit the JSON file directly; 
+right clicking on the desktop icon and opening the file location. The database is called ï¿½evaldb.json.ï¿½ It is not recommended that you edit the JSON file directly; 
 mechanisms to purge data from the database are available from within the application. There is currently no published method to encrypt the data inside the JSON file. 
 
 Updates:
@@ -37,4 +37,4 @@ development team. The development team will then contact you directly.
 CWA 15793 2011 Planning and Implementation Tool end-user license agreement:
 CC-BY-NC-SA-4.0
 
-Dependencies are listed in the "Attributions" file in the program's "README&Legal&Templates" folder. 
+Dependencies are listed in the "Attributions" file in the program's "Legal&Templates" folder. 

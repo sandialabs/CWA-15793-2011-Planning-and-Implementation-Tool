@@ -71,7 +71,7 @@
             
             const options = {
                 template: {
-                    filePath: './README&Legal&Templates/docTemplate.docx', // before packaging on MacOS, path must be set to './contents/extraFiles/docTemplate.docx'
+                    filePath: './Legal&Templates/docTemplate.docx', // before packaging on MacOS, path must be set to './contents/extraFiles/docTemplate.docx'
                     data: {
                     'title': enteredFileName,
                     'evalDate': db.get('file').find({ fileName : enteredFileName }).get('creationTime').value(),
