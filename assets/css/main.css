@@ -1,0 +1,175 @@
+@font-face {
+    font-family: 'Roboto';
+    src: '../fonts/Roboto-Regular_0.ttf' format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Roboto';
+    src: '../fonts/Roboto-Bold_0.ttf' format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 10;
+}
+  
+  body {
+    font-family: 'Roboto'; /* NOTE: Defining a font-family like this will search the system for the font and pick a defualt if it does not exist. Fonts can be imported as above, which might be the better approach*/
+    font-weight: normal;
+    font-style: normal;
+    transition: all 0.3s cubic-bezier(.27,0,.93,.27); /*specifically for the blur effect when db cleaning window is opened*/
+  }
+  
+  .glass {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    display: none; 
+    position: fixed;
+    background-size: cover;
+    opacity: 0;
+    background-color: white;
+  }
+
+  button {
+    float: center;
+    background:#314a8c;
+    border: none;
+    color:#fff;
+    text-transform: uppercase;
+    padding: 20px;
+    margin-right: 50px;
+    cursor: pointer;
+    transition: all 0.6s ease 0s;
+  }
+
+  button:hover {
+  background: #3071A9
+  }
+
+  .container {
+    margin: 0 auto;
+    max-width: 80%; 
+
+  }
+  
+  .header {
+    background: url(../background.jpg) no-repeat center center; 
+    background-size: cover;
+    height: 600px;
+    text-align: stretch; 
+    color: solid black;
+  }
+  
+  .header .container {
+    position: relative;
+    top: 270px;
+  }
+  
+  .header h1 {
+    color: #393a3b;
+    text-align: center;
+    line-height: 100px; 
+    margin-top: 0px;
+    margin-bottom: 40px;
+    text-transform: uppercase; 
+  }
+  
+  @media (min-width:550px) {
+    .header h1 {
+      font-size: 100px;
+    }
+  }
+  
+  .header p {
+    color: #fff;
+    font-weight: 500;
+    letter-spacing: 8px;
+    margin-bottom: 40px;
+    margin-top: 0;
+    text-transform: uppercase; 
+  }
+
+  .nav { 
+    background: #000;
+    height: 80px; 
+    width: 100%;
+  }
+
+  .main .container {
+    margin: 40px auto;
+  }
+  
+  @media (max-width: 500px) {
+    .header h1 {
+      font-size: 50px;
+      line-height: 64px;
+    }
+  }
+
+* {
+    box-sizing: border-box;
+}
+/* Create two equal columns that floats next to each other */
+.column {
+    float: left;
+    width: 47%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.updateInfo {
+  position: fixed; 
+  top: 0px;
+  z-index: 99;
+  left: calc(30% + 20px);
+  color: white;
+  font-weight: normal;
+  font-style: normal;
+  text-align: stretch;
+  font-size: 16px;; 
+}
+@media (max-width: 1250px) {
+  .updateInfo {
+  font-size: 13px;
+  top: 5px;
+  }
+}
+.updateBg {
+  position: fixed; 
+  z-index: 1;
+  opacity: .75;
+  background-color: #393a3b;
+  top: 0px;
+  left: 30%;
+  width: 40%;
+  height: 60px
+}
+.updateBtns {
+  position: fixed; 
+  z-index: 100;
+  top: 0;
+  right: 30%;
+  font-size: 10px;
+}
+@media (max-width: 1250px) {
+  .updateBtn {
+  font-size: 10px;
+  margin-right: 0px;
+  padding: 10px;
+  }
+  .updateBtns {
+    top: 13px;
+    right: calc(30% + 10px);
+  }
+}

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang = "en">
+
+  <head> 
+	<title>CWA 15793:2011 Tool</title> 
+	  
+	<script>window.$ = window.jQuery = require('jquery');</script> <!-- import jquery -->
+
+	<link href="../assets/css/main.css" type="text/css" rel="stylesheet">
+	<link href="../node_modules/fullcalendar/dist/fullcalendar.css" type="text/css" rel="stylesheet">
+
+	<script src="../node_modules/moment/min/moment.min.js"></script>
+	<script src="../node_modules/fullcalendar/dist/fullcalendar.min.js"></script>
+	<script src="lowdb.js"></script>
+	
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <h1>CWA 15793:2011</h1>
+        <p style="text-align: center; color: #4f5051; font-size: 20px;">Planning and Implementation Tool</p>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div style="text-align: center;">
+          <button id="newEvalBtn">
+            New Evaluation
+          </button>
+          <button id="loadEvalBtn"> 
+            Load Evaluation
+		  </button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="container">
+        <h2>Getting Started with the CWA 15793:2011 Tool</h2>
+
+        <p>
+        The CWA 15793:2011 Tool is intended to assist in evaluating and managing progress
+        <br>
+    	in the implementation of the CEN Workshop Agreement on laboratory biorisk management. 
+		</p> 
+
+		<br>
+
+		<h2>Evaluation Quick View and Comparison</h2>
+		<div class="row">
+			<div class="column" id='left' style='padding-right: 40px;'>
+				<h3>Select an Evaluation:</h3>
+				<select id="left_chooseFile"></select>
+				
+				<div id='left_content' style='display: none'>
+					<br> <br> <br>
+
+					<canvas id="left_report"></canvas>
+
+					<br> <br> <br>
+
+					<h3>Upcoming Goals and Objectives:</h3>
+
+					<br> <br>
+
+					<div id='left_calendar'></div>
+					
+					<br> <br> <br>
+
+					<h3>Percent requirement is met by laboratory:</h3> 
+					<p>Sorted from top to bottom by importance level rated in evaluation.</p>
+					<br> <br>
+
+					<div id="left_reqCanvases"></div>
+				</div>
+			</div>
+
+			<div class="column" id='right' style='padding-left: 40px;'>
+				<h3>Select a Different Evaluation:</h3>
+				<select id="right_chooseFile"></select>
+					
+				<div id='right_content' style='display: none'>
+					<br> <br> <br>
+
+					<canvas id="right_report"></canvas>
+					
+					<br> <br> <br>
+								
+					<h3>Upcoming Goals and Objectives:</h3>
+
+					<br> <br>
+
+					<div id='right_calendar'></div>
+					
+					<br> <br> <br>
+
+					<h3>Percent requirement is met by laboratory:</h3> 
+					<p>Sorted from top to bottom by importance level rated in evaluation.</p>
+					<br> <br>
+
+					<div id="right_reqCanvases"></div>
+				</div>
+			</div>
+		</div>
+      </div>
+	</div>
+	<div class = "glass" id = "glassOverlay">
+	</div>
+
+	<div id="updateHUD" style="display: none;">
+		<div id="updateInfo" class="updateInfo"> 
+			<h3>Update available!</h3>
+		</div>
+		<div class ="updateBtns">            
+			<button id='yesBtn' class="updateBtn">Update</button>
+			<button id='noBtn' class="updateBtn">Later</button>
+		</div>
+		<div class="updateBg"></div>
+	</div>
+  </body>
+
+  <!-- Create file popups when newEvalBtn or loadEvalBtn are clicked -->
+  <script>
+    const electron = require('electron')
+	const path = require ('path')
+	const ipc = electron.ipcRenderer
+    const BrowserWindow = electron.remote.BrowserWindow
+
+    const newEvalBtn = document.getElementById('newEvalBtn')
+    const loadEvalBtn = document.getElementById('loadEvalBtn')
+
+    newEvalBtn.addEventListener('click', function(event) {
+      const modalPath = path.join('file://', __dirname, 'newFile.html')
+      let win = new BrowserWindow({ frame: false, resizable: false,
+      transparent: true, alwaysOnTop: true, width: 400, height: 275 })
+      win.on('close', function() { win = null })
+      win.loadURL(modalPath)
+      win.show()
+    });
+
+    loadEvalBtn.addEventListener('click', function(event) {
+      const modalPath = path.join('file://', __dirname, 'loadFile.html')
+      let win = new BrowserWindow({ frame: false, resizable: false,
+      transparent: true, alwaysOnTop: true, width: 400, height: 275 })
+      win.on('close', function() { win = null })
+      win.loadURL(modalPath)
+      win.show()
+	});
+
+	ipc.on('dbCleanWinOpen', function (event) {
+		setTimeout(frostedGlass, 700); // set a timeout before adding frosted glass to give popup time to open. Can't wait for a document ready event from the popup because then index.html won't be focused
+		function frostedGlass() {
+			$('#glassOverlay').fadeTo(300, 0.5, "swing" ) // show blocking glass div
+			$(document.body).css('filter','blur(2px)') // add blur effect
+			$(document.body).css('overflow','hidden') // disable scrolling
+		}
+	});
+
+	// Auto updater
+    ipc.send('indexHTMLReady') // inform main.js that this document is ready (used for autoUpdater)
+    
+    ipc.on('updateAvailable', function (event) {  // main.js has reported that an update is available
+      $( "#updateHUD" ).show()  // show the update HUD
+    });
+
+    const yesBtn = document.getElementById('yesBtn') // instantiate variables for updateHUD yes/no buttons
+    const noBtn = document.getElementById('noBtn')
+
+    yesBtn.addEventListener('click', function(event) { // if yes
+        ipc.send('initiateUpdate')  // tell main.js to begin the update
+        $( "#updateInfo" ).empty()  
+        $( "#updateInfo" ).append("<h3>Updating...</h3>") // change info in #updateInfo to show that the update has begun
+    });
+    noBtn.addEventListener('click', function(event) {
+      $( "#updateHUD" ).css("display", "none")  // if no, close the updateHUD and do nothing else
+    });
+
+	</script>
+	
+	<script> // Applies to the first column, 'left_chooseFile'
+        // populate dropdown
+        var $chooseFile = $("#left_chooseFile");
+            vals = []; // initialize an array to hold values retrieved from getFileAges() function
+            
+        $chooseFile.empty(); // empty the list before executing script each time
+            
+        if (getFileNames().length === 0) {
+            $chooseFile.append("<option>" + "No files found" + "</option>"); // alert user if no files found in database
+        }
+        else {
+			$chooseFile.append("<option>" + "Please Select" + "</option>");
+            vals = getFileNames(); // if there are files, populate vals
+        
+            $.each(vals, function(index, value) { // for each value in vals
+                    $chooseFile.append("<option>" + value + "</option>"); // append to list
+            });
+        };
+
+		$chooseFile.change(function() {
+
+			$('#left_content').show()
+
+			if ($('#left_chooseFile option:eq(' + 0 + ')').val() === "Please Select") {
+				$('#left_chooseFile option:eq(' + 0 + ')').remove(); // Remove "Please Select" so user can't select it later
+			}
+			enteredFileName = document.getElementById('left_chooseFile').value 
+			const DoughnutChart = require('simple-doughnut-chart');
+			let progress = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('progress').value()
+			let progress_percent
+			if (progress > 0) {
+				progress_percent = ((progress)/63)*100 // NEEDS TO BE UPDATED WHENEVER ANY PAGES ARE ADDED
+			}
+			else {
+				progress_percent = -1 // value of -1 shows pie chart in default state
+			}
+
+			new DoughnutChart(document.getElementById('left_report'), {
+				canvasSize: 140,            
+				doughnutSize: 12,           
+				defaultTextSize: 10,        
+				activeTextSize: 10,         
+				defaultColor: '#eee',       
+				defaultTextColor: '#4f5051',  
+				activeColor: '#314a8c',    
+				percentageColor: '#314a8c', 
+				percentage: progress_percent,           
+				decimalPointDigit: 0,      
+				forceDecimalPointDigit: -1,  
+				text: 'Evaluation Progress',   
+				font_family: "Roboto",   // can pass any font family that the webpage has access to through css or system      
+				duration: 1500,             
+				dashWidth: 12,           
+				dashHeight: 4,              
+				dashMargin: 6,              
+				dashLength: 3,              
+				dashColor: 3               
+			});
+
+			if (progress === 63) { // NEEDS TO BE UPDATED WHENEVER ANY PAGES ARE ADDED
+				progress = 62 //since there is no case 63 in the following switch (progress is set to 63 to indicate that the evaluation was fully completed), reset progress to 62 at this point
+			} 
+
+			let prtyData = [] // initialize variable to hold importance and requirement met levels from evals
+			let goal_dates = [] // initialize variable for moving goals into calendar
+			let obj_dates = [] // initialize variable for moving objectives into calendar
+			for (let i = 0; i <= progress; i++) { 
+				let goal_datesSel = "pg" + i + "_goalPanel"
+				let obj_datesSel = "pg" + i + "_objPanel"
+				let importanceSel = "pg" + i + "_prty" //select each page's priority level, ex: "pg1_prty"
+				let reqMetSel = "pg" + i + "_range" //select each page's 'requirement met' slider value, ex: "pg1_prty"
+				let reqName
+				
+				switch(i){case 0:reqName="4.1.1: Biorisk management system";break;case 1:reqName="4.1.2: Continual improvement";break;case 2:reqName="4.2.1: Biorisk management policy";break;case 3:reqName="4.3.1.1: Planning and resources";break;case 4:reqName="4.3.1.2: Risk assessment timing and scope";break;case 5:reqName="4.3.1.3: Hazard identification";break;case 6:reqName="4.3.1.4: Risk assessment";break;case 7:reqName="4.3.1.5: Risk management";break;case 8:reqName="4.3.2: Conformity and compliance";break;case 9:reqName="4.3.3.1: Objectives, targets, and programme";break;case 10:reqName="4.3.3.2: Monitoring controls";break;case 11:reqName="4.4.1.1: Roles, responsibilities and authorities";break;case 12:reqName="4.4.1.2: Senior management";break;case 13:reqName="4.4.1.3: Biorisk management committee";break;case 14:reqName="4.4.1.4: Biorisk management advisor";break;case 15:reqName="4.4.1.5: Scientific management";break;case 16:reqName="4.4.1.6: Occupational health";break;case 17:reqName="4.4.1.7: Facility management";break;case 18:reqName="4.4.1.8: Security management";break;case 19:reqName="4.4.1.9: Animal handling";break;case 20:reqName="4.4.2: Personnel training, awareness and competence";break;case 21:reqName="4.4.2.1: Recruitment";break;case 22:reqName="4.4.2.2: Competence";break;case 23:reqName="4.4.2.3: Continuity and succession planning";break;case 24:reqName="4.4.2.4: Training";break;case 25:reqName="4.4.3: Consultation and communication";break;case 26:reqName="4.4.4: Operational control";break;case 27:reqName="4.4.4.1: General safety";break;case 28:reqName="4.4.4.2: Biological agents and toxin inventory and information";break;case 29:reqName="4.4.4.3: Work programme, planning and capacity";break;case 30:reqName="4.4.4.4: Change management";break;case 31:reqName="4.4.4.5.1: Good microbiological technique";break;case 32:reqName="4.4.4.5.2: Inactivation of biological agents and toxins";break;case 33:reqName="4.4.4.5.3: Waste management";break;case 34:reqName="4.4.4.5.4: Clothing and personal protective equipment";break;case 35:reqName="4.4.4.6: Worker health programme";break;case 36:reqName="4.4.4.6.1: Vaccination of personnel";break;case 37:reqName="4.4.4.7: Behavioral factors and control of workers";break;case 38:reqName="4.4.4.7.1: Personnel reliability";break;case 39:reqName="4.4.4.7.2: Contractors, visitors and suppliers";break;case 40:reqName="4.4.4.7.3: Exclusion";break;case 41:reqName="4.4.4.8: Infrastructure and operational management";break;case 42:reqName="4.4.4.8.1: Planning, design, and verification";break;case 43:reqName="4.4.4.8.2: Commissioning and decommissioning";break;case 44:reqName="4.4.4.8.3: Maintenance, control, calibration, certification, and verification";break;case 45:reqName="4.4.4.8.4: Physical security";break;case 46:reqName="4.4.4.8.5: Information security";break;case 47:reqName="4.4.4.8.6: Control of supplies";break;case 48:reqName="4.4.4.9: Transport of biological agents and toxins";break;case 49:reqName="4.4.5: Emergency response and contingency planning";break;case 50:reqName="4.4.5.1: Emergency scenarios";break;case 51:reqName="4.4.5.2: Emergency plans";break;case 52:reqName="4.4.5.3: Emergency exercises and simulations";break;case 53:reqName="4.4.5.4: Contingency plans";break;case 54:reqName="4.5.1: Performance measurement and analysis of data";break;case 55:reqName="4.5.2: Records, document and data control";break;case 56:reqName="4.5.3: Inventory monitoring and control";break;case 57:reqName="4.5.4.1: Accident/incident investigation";break;case 58:reqName="4.5.4.2: Control of nonconformities";break;case 59:reqName="4.5.4.3: Corrective action";break;case 60:reqName="4.5.4.4: Preventative action";break;case 61:reqName="4.5.5: Inspection and audit";break;case 62:reqName="4.6.1: Biorisk management review";break};
+
+				// if reqname is bigger than 29 characters, it will not fit in doughnut chart .. so slice and append ellipses
+				if (reqName.length > 29) {
+					reqName = reqName.slice(0, 27) + "...";
+				}
+				
+				// if the user has added multiple goals, get the specific object at each index of the goal panel
+				let goal_datesHoler = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_datesSel).value() // initialize holder
+				if (goal_datesHoler !== undefined) { // if the block of dates is not undefined
+					for (let j = 0; j < goal_datesHoler.length; j++) { //loop through the length of dates
+						let goal_indvSel = goal_datesSel + "[" + j + "]"  //initialize a selector to get the individual date
+						let goal_oneDate = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_indvSel).map().value() //initialize holder
+						let obj_datesHoler = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_indvSel).get(obj_datesSel).value()
+
+						if (goal_oneDate !== undefined) { // if the single date is not undefined
+							goal_oneDate.title = reqName + "\n" + goal_oneDate[0]; // add in the name of the requirement and a return before the description
+							goal_oneDate.start = goal_oneDate[1]; // array elements are defined this way because if goal_oneDate were pulled in without being mapped, db would persist in memory and duplicates form if 
+							goal_oneDate.end = goal_oneDate[2];			// the dropdown change event listener is fired multiple times. This way, data is separated into a separate array that can be cleared.
+							goal_dates.push(goal_oneDate) // put into goal_dates object at pg i item j in the goal panel
+						}
+
+						if (obj_datesHoler !== undefined) {
+							for (let k = 0; k < obj_datesHoler.length; k++) {
+								let obj_indivSel = obj_datesSel + "[" + k + "]"
+								let obj_oneDate = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_indvSel).get(obj_indivSel).map().value()
+								if (obj_oneDate !== undefined) { // if the single date is not undefined
+									obj_oneDate.title = reqName + "\n" + obj_oneDate[0]; // add in the name of the requirement and a return before the description
+									obj_oneDate.start = obj_oneDate[1];
+									obj_oneDate.end = obj_oneDate[2];
+									obj_dates.push(obj_oneDate) // put into goal_dates object at pg i item j in the objectives panel
+								}
+							}
+						}
+					}	
+				}
+				prtyData.push(db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(importanceSel).value() + "," +  
+				db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(reqMetSel).value() + "," + reqName) // get data from db & push; divide with ','
+			};
+
+			$('#left_calendar').fullCalendar( 'destroy' ) //clear the calendar in case it has already been filled
+			$('#left_calendar').fullCalendar({
+				// put your options and callbacks here
+				eventSources: [{
+					// goals
+					events: function( start, end, timezone, callback ) { 
+						callback(goal_dates);
+					},
+					color: '#314a8c' // darker blue - actions should be lighter blue
+					},
+					// actions
+					{
+					events: function( start, end, timezone, callback ) { 
+						callback(obj_dates);
+					},
+					color: '#3071A9' // lighter blue
+					}
+				]
+			});
+			
+			function compareLetters(a, b){ // this function allows for js .sort() method to be used to sort priorities, where 'Medium' will be placed before 'Low' (normally alphabetic). Somewhat exaustive, but there are errors if not defined specifically
+				if (a.charAt(0) === 'H' && b.charAt(0) === 'M') {return -1;} // high before medium
+				else if (a.charAt(0) === 'M' && b.charAt(0) === 'H') {return 1;} // high before medium
+				else if (a.charAt(0) === 'H' && b.charAt(0) === 'L') {return -1;} // high before low
+				else if (a.charAt(0) === 'L' && b.charAt(0) === 'H') {return 1;} // high before low
+				else if (a.charAt(0) === 'H' && b.charAt(0) === 'N') {return -1;} // high before N/A
+				else if (a.charAt(0) === 'N' && b.charAt(0) === 'H') {return 1;} // high before N/A
+				else if (a.charAt(0) === 'M' && b.charAt(0) === 'L') {return -1;} // medium before low
+				else if (a.charAt(0) === 'L' && b.charAt(0) === 'M') {return 1;} // medium before low
+				else if (a.charAt(0) === 'M' && b.charAt(0) === 'N') {return -1;} // medium before N/A
+				else if (a.charAt(0) === 'N' && b.charAt(0) === 'M') {return 1;} // medium before N/A
+				else if (a.charAt(0) === 'L' && b.charAt(0) === 'N') {return -1;} // low before N/A
+				else if (a.charAt(0) === 'N' && b.charAt(0) === 'L') {return 1;} // low before N/A
+				else {return 0}
+			}; 
+
+			prtyData.sort (compareLetters); // conduct the sort, where alphabetic sorting is adjusted by compareLetters
+
+			
+			let prtyHolder = [] // initialize array to hold data from 
+			$('#left_reqCanvases').empty();
+			for (let i = 0; i < prtyData.length; i++) {
+				prtyHolder.push(prtyData[i].split(",")) // multidimensionally push requirement met level and requirement name into prtyholder 
+
+				if (prtyHolder[i][1] !== 'undefined' && prtyHolder[i][0] !== 'undefined') {
+					$('#left_reqCanvases').append("<canvas id='leftPerf" + i + "'><canvas>") //use jquery to insert new canvas for each requirement's percent met
+					$('#left_reqCanvases').append("<br>") // add a line break
+
+					new DoughnutChart(document.getElementById('leftPerf' + i), { //render new doughnut chart into each inserted canvas
+						canvasSize: 140,            
+						doughnutSize: 12,           
+						defaultTextSize: 8,        
+						activeTextSize: 8,           
+						defaultColor: '#eee',       
+						defaultTextColor: '#4f5051',  
+						activeColor: '#314a8c',    
+						percentageColor: '#314a8c', 
+						percentage: prtyHolder[i][1],           // percentage is the percent of requirement met (located at prtyholder[i][0])
+						decimalPointDigit: 0,      
+						forceDecimalPointDigit: -1,  
+						text: prtyHolder[i][2],   				// name of requirement is located at prtyholder[i][1]
+						font_family: "Roboto",          
+						duration: 0,             
+						dashWidth: 12,           
+						dashHeight: 4,              
+						dashMargin: 6,              
+						dashLength: 3,              
+						dashColor: 3               
+					});
+				}
+			}
+		});
+	</script>	
+	
+	<script> // Applies to the second column, 'right_chooseFile'
+        // populate dropdown
+        var $chooseFile = $("#right_chooseFile");
+            vals = []; // initialize an array to hold values retrieved from getFileAges() function
+            
+        $chooseFile.empty(); // empty the list before executing script each time
+            
+        if (getFileNames().length === 0) {
+            $chooseFile.append("<option>" + "No files found" + "</option>"); // alert user if no files found in database
+        }
+        else {
+			$chooseFile.append("<option>" + "Please Select" + "</option>");
+            vals = getFileNames(); // if there are files, populate vals
+        
+            $.each(vals, function(index, value) { // for each value in vals
+                    $chooseFile.append("<option>" + value + "</option>"); // append to list
+            });
+        };
+
+		$chooseFile.change(function() {
+
+			$('#right_content').show()
+
+			if ($('#right_chooseFile option:eq(' + 0 + ')').val() === "Please Select") {
+				$('#right_chooseFile option:eq(' + 0 + ')').remove(); // Remove "Please Select" so user can't select it later
+			}
+			enteredFileName = document.getElementById('right_chooseFile').value 
+			const DoughnutChart = require('simple-doughnut-chart');
+			let progress = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('progress').value()
+			let progress_percent
+			if (progress > 0) {
+				progress_percent = ((progress)/63)*100 // NEEDS TO BE UPDATED WHENEVER ANY PAGES ARE ADDED
+			}
+			else {
+				progress_percent = -1 // value of -1 shows pie chart in default state
+			}
+
+			new DoughnutChart(document.getElementById('right_report'), {
+				canvasSize: 140,            
+				doughnutSize: 12,           
+				defaultTextSize: 10,        
+				activeTextSize: 10,         
+				defaultColor: '#eee',       
+				defaultTextColor: '#4f5051',  
+				activeColor: '#314a8c',    
+				percentageColor: '#314a8c', 
+				percentage: progress_percent,           
+				decimalPointDigit: 0,      
+				forceDecimalPointDigit: -1,  
+				text: 'Evaluation Progress',   
+				font_family: "Roboto",   // can pass any font family that the webpage has access to through css or system      
+				duration: 1500,             
+				dashWidth: 12,           
+				dashHeight: 4,              
+				dashMargin: 6,              
+				dashLength: 3,              
+				dashColor: 3               
+			});
+
+			if (progress === 63) { // NEEDS TO BE UPDATED WHENEVER ANY PAGES ARE ADDED
+				progress = 62 //since there is no case 63 in the following switch (progress is set to 63 to indicate that the evaluation was fully completed), reset progress to 62 at this point
+			} 
+
+			let prtyData = [] // initialize variable to hold importance and requirement met levels from evals
+			let goal_dates = [] // initialize variable for moving goals into calendar
+			let obj_dates = [] // initialize variable for moving objectives into calendar
+			for (let i = 0; i <= progress; i++) { 
+				let goal_datesSel = "pg" + i + "_goalPanel"
+				let obj_datesSel = "pg" + i + "_objPanel"
+				let importanceSel = "pg" + i + "_prty" //select each page's priority level, ex: "pg1_prty"
+				let reqMetSel = "pg" + i + "_range" //select each page's 'requirement met' slider value, ex: "pg1_prty"
+				let reqName 
+				
+				switch (i) {
+					case 0:
+						reqName = "4.1.1: Biorisk management system";
+						break;
+					case 1:
+						reqName = "4.1.2: Continual improvement";
+						break;
+					case 2:
+						reqName = "4.2.1: Biorisk management policy";
+						break;
+					case 3:
+						reqName = "4.3.1.1: Planning and resources";
+						break;
+					case 4:
+						reqName = "4.3.1.2: Risk assessment timing and scope";
+						break;
+					case 5:
+						reqName = "4.3.1.3: Hazard identification";
+						break;
+					case 6:
+						reqName = "4.3.1.4: Risk assessment";
+						break;
+					case 7:
+						reqName = "4.3.1.5: Risk management";
+						break;
+					case 8:
+						reqName = "4.3.2: Conformity and compliance";
+						break;
+					case 9:
+						reqName = "4.3.3.1: Objectives, targets, and programme";
+						break;
+					case 10:
+						reqName = "4.3.3.2: Monitoring controls";
+						break;
+					case 11:
+						reqName = "4.4.1.1: Roles, responsibilities and authorities";
+						break;
+					case 12:
+						reqName = "4.4.1.2: Senior management";
+						break;
+					case 13:
+						reqName = "4.4.1.3: Biorisk management committee";
+						break;
+					case 14:
+						reqName = "4.4.1.4: Biorisk management advisor";
+						break;
+					case 15:
+						reqName = "4.4.1.5: Scientific management";
+						break;
+					case 16:
+						reqName = "4.4.1.6: Occupational health";
+						break;
+					case 17:
+						reqName = "4.4.1.7: Facility management";
+						break;
+					case 18:
+						reqName = "4.4.1.8: Security management";
+						break;
+					case 19:
+						reqName = "4.4.1.9: Animal handling";
+						break;
+					case 20:
+						reqName = "4.4.2: Personnel training, awareness and competence";
+						break;
+					case 21:
+						reqName = "4.4.2.1: Recruitment";
+						break;
+					case 22:
+						reqName = "4.4.2.2: Competence";
+						break;
+					case 23:
+						reqName = "4.4.2.3: Continuity and succession planning";
+						break;
+					case 24:
+						reqName = "4.4.2.4: Training";
+						break;
+					case 25:
+						reqName = "4.4.3: Consultation and communication";
+						break;
+					case 26:
+						reqName = "4.4.4: Operational control";
+						break;
+					case 27:
+						reqName = "4.4.4.1: General safety";
+						break;
+					case 28:
+						reqName = "4.4.4.2: Biological agents and toxin inventory and information";
+						break;
+					case 29:
+						reqName = "4.4.4.3: Work programme, planning and capacity";
+						break;
+					case 30:
+						reqName = "4.4.4.4: Change management";
+						break;
+					case 31:
+						reqName = "4.4.4.5.1: Good microbiological technique";
+						break;
+					case 32:
+						reqName = "4.4.4.5.2: Inactivation of biological agents and toxins";
+						break;
+					case 33:
+						reqName = "4.4.4.5.3: Waste management";
+						break;
+					case 34:
+						reqName = "4.4.4.5.4: Clothing and personal protective equipment";
+						break;
+					case 35:
+						reqName = "4.4.4.6: Worker health programme";
+						break;
+					case 36:
+						reqName = "4.4.4.6.1: Vaccination of personnel";
+						break;
+					case 37:
+						reqName = "4.4.4.7: Behavioral factors and control of workers";
+						break;
+					case 38:
+						reqName = "4.4.4.7.1: Personnel reliability";
+						break;
+					case 39:
+						reqName = "4.4.4.7.2: Contractors, visitors and suppliers";
+						break;
+					case 40:
+						reqName = "4.4.4.7.3: Exclusion";
+						break;
+					case 41:
+						reqName = "4.4.4.8: Infrastructure and operational management";
+						break;
+					case 42:
+						reqName = "4.4.4.8.1: Planning, design, and verification";
+						break;
+					case 43:
+						reqName = "4.4.4.8.2: Commissioning and decommissioning";
+						break;
+					case 44:
+						reqName = "4.4.4.8.3: Maintenance, control, calibration, certification, and verification";
+						break;
+					case 45:
+						reqName = "4.4.4.8.4: Physical security";
+						break;
+					case 46:
+						reqName = "4.4.4.8.5: Information security";
+						break;
+					case 47:
+						reqName = "4.4.4.8.6: Control of supplies";
+						break;
+					case 48:
+						reqName = "4.4.4.9: Transport of biological agents and toxins";
+						break;
+					case 49:
+						reqName = "4.4.5: Emergency response and contingency planning";
+						break;
+					case 50:
+						reqName = "4.4.5.1: Emergency scenarios";
+						break;
+					case 51:
+						reqName = "4.4.5.2: Emergency plans";
+						break;
+					case 52:
+						reqName = "4.4.5.3: Emergency exercises and simulations";
+						break;
+					case 53:
+						reqName = "4.4.5.4: Contingency plans";
+						break;
+					case 54:
+						reqName = "4.5.1: Performance measurement and analysis of data";
+						break;
+					case 55:
+						reqName = "4.5.2: Records, document and data control";
+						break;
+					case 56:
+						reqName = "4.5.3: Inventory monitoring and control";
+						break;
+					case 57:
+						reqName = "4.5.4.1: Accident/incident investigation";
+						break;
+					case 58:
+						reqName = "4.5.4.2: Control of nonconformities";
+						break;
+					case 59:
+						reqName = "4.5.4.3: Corrective action";
+						break;
+					case 60:
+						reqName = "4.5.4.4: Preventative action";
+						break;
+					case 61:
+						reqName = "4.5.5: Inspection and audit";
+						break;
+					case 62:
+						reqName = "4.6.1: Biorisk management review";
+						break;
+				}
+
+				// if reqname is bigger than 29 characters, it will not fit in doughnut chart .. so slice and append ellipses
+				if (reqName.length > 29) {
+					reqName = reqName.slice(0, 27) + "...";
+				}
+				
+				// if the user has added multiple goals, get the specific object at each index of the goal panel
+				let goal_datesHoler = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_datesSel).value() // initialize holder
+				if (goal_datesHoler !== undefined) { // if the block of dates is not undefined
+					for (let j = 0; j < goal_datesHoler.length; j++) { //loop through the length of dates
+						let goal_indvSel = goal_datesSel + "[" + j + "]"  //initialize a selector to get the individual date
+						let goal_oneDate = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_indvSel).map().value() //initialize holder
+						let obj_datesHoler = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_indvSel).get(obj_datesSel).value()
+
+						if (goal_oneDate !== undefined) { // if the single date is not undefined
+							goal_oneDate.title = reqName + "\n" + goal_oneDate[0]; // add in the name of the requirement and a return before the description
+							goal_oneDate.start = goal_oneDate[1]; // array elements are defined this way because if goal_oneDate were pulled in without being mapped, db would persist in memory and duplicates form if 
+							goal_oneDate.end = goal_oneDate[2];			// the dropdown change event listener is fired multiple times. This way, data is separated into a separate array that can be cleared.
+							goal_dates.push(goal_oneDate) // put into goal_dates object at pg i item j in the goal panel
+						}
+
+						if (obj_datesHoler !== undefined) {
+							for (let k = 0; k < obj_datesHoler.length; k++) {
+								let obj_indivSel = obj_datesSel + "[" + k + "]"
+								let obj_oneDate = db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(goal_indvSel).get(obj_indivSel).map().value()
+								if (obj_oneDate !== undefined) { // if the single date is not undefined
+									obj_oneDate.title = reqName + "\n" + obj_oneDate[0]; // add in the name of the requirement and a return before the description
+									obj_oneDate.start = obj_oneDate[1];
+									obj_oneDate.end = obj_oneDate[2];
+									obj_dates.push(obj_oneDate) // put into goal_dates object at pg i item j in the objectives panel
+								}
+							}
+						}
+					}	
+				}
+				prtyData.push(db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(importanceSel).value() + "," +  
+				db.get('file').find({ fileName : enteredFileName }).get('evalData[0]').get('data').get(reqMetSel).value() + "," + reqName) // get data from db & push; divide with ','
+			};
+
+			$('#right_calendar').fullCalendar( 'destroy' ) //clear the calendar in case it has already been filled
+			$('#right_calendar').fullCalendar({
+				// put your options and callbacks here
+				eventSources: [{
+					// goals
+					events: function( start, end, timezone, callback ) { 
+						callback(goal_dates);
+					},
+					color: '#314a8c' // darker blue - actions should be lighter blue
+					},
+					// actions
+					{
+					events: function( start, end, timezone, callback ) { 
+						callback(obj_dates);
+					},
+					color: '#3071A9' // lighter blue
+					}
+				]
+			});
+
+			function compareLetters(a, b){ // this function allows for js .sort() method to be used to sort priorities, where 'Medium' will be placed before 'Low' (normally alphabetic). Somewhat exaustive, but there are errors if not defined specifically
+				if (a.charAt(0) === 'H' && b.charAt(0) === 'M') {return -1;} // high before medium
+				else if (a.charAt(0) === 'M' && b.charAt(0) === 'H') {return 1;} // high before medium
+				else if (a.charAt(0) === 'H' && b.charAt(0) === 'L') {return -1;} // high before low
+				else if (a.charAt(0) === 'L' && b.charAt(0) === 'H') {return 1;} // high before low
+				else if (a.charAt(0) === 'H' && b.charAt(0) === 'N') {return -1;} // high before N/A
+				else if (a.charAt(0) === 'N' && b.charAt(0) === 'H') {return 1;} // high before N/A
+				else if (a.charAt(0) === 'M' && b.charAt(0) === 'L') {return -1;} // medium before low
+				else if (a.charAt(0) === 'L' && b.charAt(0) === 'M') {return 1;} // medium before low
+				else if (a.charAt(0) === 'M' && b.charAt(0) === 'N') {return -1;} // medium before N/A
+				else if (a.charAt(0) === 'N' && b.charAt(0) === 'M') {return 1;} // medium before N/A
+				else if (a.charAt(0) === 'L' && b.charAt(0) === 'N') {return -1;} // low before N/A
+				else if (a.charAt(0) === 'N' && b.charAt(0) === 'L') {return 1;} // low before N/A
+				else {return 0}
+			}; 
+
+			prtyData.sort (compareLetters); // conduct the sort, where alphabetic sorting is adjusted by compareLetters
+
+			let prtyHolder = [] // initialize array to hold data from 
+			$('#right_reqCanvases').empty();
+			for (let i = 0; i < prtyData.length; i++) {
+				prtyHolder.push(prtyData[i].split(",")) // multidimensionally push requirement met level and requirement name into prtyholder 
+				
+				if (prtyHolder[i][1] !== 'undefined' && prtyHolder[i][0] !== 'undefined') {
+					$('#right_reqCanvases').append("<canvas id='rightPerf" + i + "'><canvas>") //use jquery to insert new canvas for each requirement's percent met
+					$('#right_reqCanvases').append("<br>") // add a line break
+
+					new DoughnutChart(document.getElementById('rightPerf' + i), { //render new doughnut chart into each inserted canvas
+						canvasSize: 140,            
+						doughnutSize: 12,           
+						defaultTextSize: 8,        
+						activeTextSize: 8,           
+						defaultColor: '#eee',       
+						defaultTextColor: '#4f5051',  
+						activeColor: '#314a8c',    
+						percentageColor: '#314a8c', 
+						percentage: prtyHolder[i][1],           // percentage is the percent of requirement met (located at prtyholder[i][0])
+						decimalPointDigit: 0,      
+						forceDecimalPointDigit: -1,  
+						text: prtyHolder[i][2],   				// name of requirement is located at prtyholder[i][1]
+						font_family: "Roboto",          
+						duration: 0,             
+						dashWidth: 12,           
+						dashHeight: 4,              
+						dashMargin: 6,              
+						dashLength: 3,              
+						dashColor: 3               
+					});
+				}
+			}
+		});
+	</script>	

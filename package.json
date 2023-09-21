@@ -1,0 +1,70 @@
+{
+  "name": "CWA_15793_2011_Tool",
+  "version": "1.0.0-alpha",
+  "description": "A biorisk management tool for evaluating progress in organizational implementation of 'CWA 15793:2011'.",
+  "main": "main.js",
+  "scripts": {
+    "postinstall": "install-app-deps",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "biorisk",
+    "management",
+    "CWA"
+  ],
+  "author": "Sandia National Laboratories",
+  "license": "CC-BY-NC-SA-4.0",
+  "build": {
+    "appId": "com.electron.CWA_15793_2011_Tool",
+    "productName": "CWA 15793 2011 Tool",
+    "copyright": "Copyright © 2018 NTESS (National Technology & Engineering Solutions of Sandia, LLC)",
+    "extraFiles": "./README&Legal&Templates",
+    "compression": "maximum",
+    "forceCodeSigning": true,
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "certificateSubjectName": "Sandia National Laboratories"
+    },
+    "nsis": {
+      "oneClick": false,
+      "license": "./build/license_en.txt"
+    }
+  },
+  "dependencies": {
+    "electron-context-menu": "^0.9.1",
+    "electron-updater": "^2.20.1",
+    "fullcalendar": "^3.8.1",
+    "generate-docx": "^2.0.0",
+    "hamburgers": "^0.9.3",
+    "jquery": "^3.3.1",
+    "jquery.mmenu": "^7.0.2",
+    "lowdb": "^1.0.0",
+    "moment": "^2.20.1",
+    "nouislider": "^10.1.0",
+    "simple-doughnut-chart": "^1.2.7",
+    "survey-jquery": "^1.0.6",
+    "util.promisify": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^1.8.7",
+    "electron-builder": "^19.20.1"
+  }
+}
